@@ -64,8 +64,11 @@ if ticker:
         # Metric Cards
         st.subheader("Key Risk Metrics")
         col1, col2, col3, col4 = st.columns(4)
+
+        ann_volatility = sigma * np.sqrt(252)
+
         with col1:
-            st.metric("Volatility (Annualized)", f"{sigma * np.sqrt(252):.2%}")
+            st.metric("Volatility (Annualized)", f"{ann_volatility:.2%}")
         with col2:
             st.metric("Avg Max Drawdown (4 Yr)", f"{avg_max_drawdown:.2%}")
         with col3:
@@ -119,6 +122,41 @@ if ticker:
         ax2.legend()
 
         st.pyplot(fig_hist)
+
+        st.markdown("---")
+
+        # 5. Final Risk Assessment
+        st.subheader("Final Quantum-Enhanced Risk Assessment")
+
+        # Calculate a simple composite risk score (0-100)
+        # Higher Volatility -> Higher Risk (Cap at 100% vol for scoring)
+        vol_score = min((ann_volatility / 1.0) * 100, 100)
+
+        # Higher Drawdown -> Higher Risk (Drawdown is negative, so take abs)
+        dd_score = min((abs(avg_max_drawdown) / 0.8) * 100, 100)
+
+        # Higher Quantum VaR (more negative) -> Higher Risk (Cap at -15% daily VaR for scoring)
+        var_score = min((abs(quantum_var) / 0.15) * 100, 100)
+
+        # Weighted Average Score
+        final_score = (0.4 * vol_score) + (0.3 * dd_score) + (0.3 * var_score)
+        final_score = min(max(final_score, 0), 100)
+
+        col_risk1, col_risk2 = st.columns([1, 2])
+
+        with col_risk1:
+            st.metric(label="Overall Risk Score (0-100)", value=f"{final_score:.0f}")
+
+        with col_risk2:
+            if final_score < 35:
+                st.success("### Status: Low Risk (Not Highly Risky)")
+                st.write(f"Based on quantum and classical metrics, **{ticker}** exhibits relatively stable price action with limited downside projected. It is not currently considered a highly risky asset.")
+            elif final_score < 65:
+                st.warning("### Status: Moderate Risk")
+                st.write(f"Based on quantum and classical metrics, **{ticker}** exhibits moderate volatility and drawdown potential. The stock carries standard market risk.")
+            else:
+                st.error("### Status: High Risk (Risky)")
+                st.write(f"Based on quantum and classical metrics, **{ticker}** exhibits significant volatility, large drawdown potential, and a severe Quantum Value at Risk. This asset is considered highly risky.")
 
     except Exception as e:
         st.error(f"An error occurred: {e}")

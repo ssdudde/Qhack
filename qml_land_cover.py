@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import rasterio
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.cluster import KMeans
 import warnings
 
 # Qiskit imports
@@ -224,11 +225,17 @@ def main():
         labels[i] = np.argmin(dists)
 
     # Reshape labels back to image shape
-    clustered_image = labels.reshape(h, w)
+    quantum_clustered_image = labels.reshape(h, w)
+
+    print("Running Classical K-Means for comparison...")
+    classical_kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+    # Fit on the exact same scaled features used for quantum
+    classical_labels = classical_kmeans.fit_predict(quantum_features)
+    classical_clustered_image = classical_labels.reshape(h, w)
 
     print("Step 9 & 10: Visualizing results...")
     # Plotting
-    fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+    fig, axes = plt.subplots(1, 4, figsize=(24, 6))
 
     # Original (Natural Color)
     axes[0].imshow(rgb_image)
@@ -242,10 +249,16 @@ def main():
     fig.colorbar(im1, ax=axes[1], fraction=0.046, pad=0.04)
 
     # Quantum Clustering Result
-    im2 = axes[2].imshow(clustered_image, cmap='viridis')
+    im2 = axes[2].imshow(quantum_clustered_image, cmap='viridis')
     axes[2].set_title(f"Quantum Clustering Result ({n_clusters} classes)")
     axes[2].axis("off")
     fig.colorbar(im2, ax=axes[2], fraction=0.046, pad=0.04, ticks=range(n_clusters))
+
+    # Classical Clustering Result
+    im3 = axes[3].imshow(classical_clustered_image, cmap='viridis')
+    axes[3].set_title(f"Classical Clustering Result ({n_clusters} classes)")
+    axes[3].axis("off")
+    fig.colorbar(im3, ax=axes[3], fraction=0.046, pad=0.04, ticks=range(n_clusters))
 
     plt.tight_layout()
     plt.savefig("land_cover_results.png")
